@@ -18,31 +18,34 @@ def pdf_to_word(pdf_file):
 
     output = io.BytesIO()
     doc.save(output)
+    output.seek(0)
     return output.getvalue()
 
 
 def excel_to_word(excel_file):
-    try:
-        # Carregar o arquivo Excel diretamente do BytesIO
-        df = pd.read_excel(excel_file, engine='openpyxl')
-        doc = Document()
+    # Carregar o arquivo Excel diretamente do BytesIO
+    df = pd.read_excel(excel_file, engine='openpyxl')
+    doc = Document()
 
-        table = doc.add_table(rows=(len(df) + 1), cols=len(df.columns))
-        table.style = 'Table Grid'
+    # Criar uma tabela no documento Word com a quantidade de linhas e colunas adequadas
+    table = doc.add_table(rows=1, cols=len(df.columns))
+    table.style = 'Table Grid'
 
-        for i, column in enumerate(df.columns):
-            table.cell(0, i).text = str(column)
+    # Adiciona os títulos das colunas na primeira linha da tabela
+    for i, column in enumerate(df.columns):
+        table.cell(0, i).text = str(column)
 
-        for row_index, row in enumerate(df.values):
-            for col_index, value in enumerate(row):
-                table.cell(row_index + 1, col_index).text = str(value)
+    # Preenche a tabela com os dados das linhas do DataFrame
+    for row in df.itertuples(index=False, name=None):
+        row_cells = table.add_row().cells
+        for i, value in enumerate(row):
+            row_cells[i].text = str(value)
 
-        output = io.BytesIO()
-        doc.save(output)
-        return output.getvalue()
-    except Exception as e:
-        st.error(f"Erro ao converter o arquivo Excel para Word: {e}")
-        return None
+    # Salva o arquivo gerado no formato Word em memória
+    output = io.BytesIO()
+    doc.save(output)
+    output.seek(0)
+    return output.getvalue()
 
 
 def excel_to_pdf(excel_file):
